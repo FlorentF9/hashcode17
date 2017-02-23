@@ -20,7 +20,7 @@ with open(file, 'r') as f:
     C = int(header[3]) # number of cache servers
     X = int(header[4]) # capacity of cache servers
     
-    S = f.readline().replace('\n', '').split() #sizes
+    S = [int(x) for x in f.readline().replace('\n', '').split()] #sizes
     
     Ld = [] # latency to data center
     K = [] # number of cache servers
