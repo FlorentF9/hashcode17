@@ -60,7 +60,7 @@ def line_ok(line):
     return sum(int(S[i]) for i in range(len(line)) if line[i] == 1) <= X
 
 n_pop = 100
-population = []
+population = np.zeros((n_pop,C,V))
 
 for k in range(n_pop):
     # pour chaque cache server
@@ -75,12 +75,72 @@ for k in range(n_pop):
             if line_ok(tmp):
                 M[i,v] = 1
 
-    population.append(M)
+    population[k] = M
 
-best_sco
-for k in range(n_pop):
     
+#%%
+# Reproduction
+epochs = 1000
+
+for _ in range(epochs):
+    scores = np.zeros(n_pop)
+    
+    for k in range(n_pop):
+        scores[k] = score(population[k], cacheLatencies, requests, C, Ld)
+     
+    population = population[np.argsort(-scores)]
+                            
+    """
+    # modification des plus mauvais individus
+    for k in range(1, n_pop):    
+        for i in range(C):
+            for j in range(V):
+                tmp = population[k,i,:].copy()
+                change = np.random.randint(2)
+                if change == 1:
+                    tmp[j] = 1-tmp[j]
+                    if line_ok(tmp):
+                        population[k,i,j] = tmp[j]
+    """
+    
+    # reproduction et mutation parmi les 10 meilleurs individus
+    n_selec = 10
+    for k in range(n_selec,n_pop):
+        male,femelle = np.random.randint(n_selec), np.random.randint(n_selec)
+        enfant = population[femelle].copy()
+        # selection aléatoire d'une ligne
+        c = np.random.randint(C)
+        enfant[c] = population[male][c]
+        # mutation
+        ok = False
+        while not ok:
+            c,v = np.random.randint(C), np.random.randint(V)
+            tmp = enfant[c].copy()
+            tmp[v] = 1-tmp[v]
+            if line_ok(tmp):
+                ok = True
+                enfant[c,v] = tmp[v]
+        population[k] = enfant
+    
+    best_score = 0
+    for k in range(n_pop):
+        sco = score(population[k], cacheLatencies, requests, C, Ld)
+        if sco > best_score:
+            best_score = sco
+    print('Best score = {}'.format(best_score))
+
+#%%
+best_score = 0
+best_indiv = np.zeros((C,V))
+
+for k in range(n_pop):
+    sco = score(population[k], cacheLatencies, requests, C, Ld)
+    if sco > best_score:
+        best_score = sco
+        best_indiv = population[k]
+
+print('Best score = {}'.format(best_score))
 
                 
-                #%%
-save_solution(random_sol, pb_name+'_caca.out')
+#%%
+save_solution(best_indiv, pb_name+'_genetic.out')
